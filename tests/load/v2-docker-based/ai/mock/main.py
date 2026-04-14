@@ -9,7 +9,7 @@ app = FastAPI()
 
 # 요청마다 범위 내 랜덤 지연을 주는 함수
 def llm_delay() -> float:
-    return random.choice([random.uniform(30.0, 50.0), random.uniform(0.3, 2.0), random.uniform(0.3, 3.0)])
+    return random.choice([random.uniform(5.0, 21.0), random.uniform(15.0, 53.0)])
 
 def stt_delay() -> float:
     return random.uniform(0.3, 2.0)
