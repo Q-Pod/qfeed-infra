@@ -1,0 +1,37 @@
+# values.yaml
+image:
+  registry: registry.k8s.io
+  repository: kube-state-metrics/kube-state-metrics
+  tag: "v2.15.0"
+
+replicas: 1
+
+extraArgs:
+  - --use-apiserver-cache
+
+service:
+  port: 8080
+  telemetryPort: 8081
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 250Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi
+
+livenessProbe:
+  httpGet:
+    path: /livez
+    port: 8080
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8081
+
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
