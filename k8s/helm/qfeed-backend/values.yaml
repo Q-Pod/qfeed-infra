@@ -1,0 +1,50 @@
+replicaCount: 3
+
+image:
+  repository: 092399857215.dkr.ecr.ap-northeast-2.amazonaws.com/qfeed-ecr-backend
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+namespace: qfeed-backend-k8s-namespace
+
+imagePullSecret: qfeed-backend-ecr-pull-secret
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits: {}
+
+strategy:
+  type: RollingUpdate
+  maxSurge: 1
+  maxUnavailable: 0
+
+probes:
+  startup:
+    failureThreshold: 20
+    periodSeconds: 3
+  readiness:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+terminationGracePeriodSeconds: 40
+
+secretRef: qfeed-backend-k8s-secret
+
+otel:
+  disabled: "true"
+  tracesExporter: "none"
+  metricsExporter: "none"
+  logsExporter: "none"
+
+pdb:
+  minAvailable: 1
