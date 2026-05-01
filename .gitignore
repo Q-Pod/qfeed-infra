@@ -13,3 +13,5 @@
 # Load Testing
 results/
 __pycache__/
+tests/load/k6/tokens.json
+.venv/
