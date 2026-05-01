@@ -57,6 +57,18 @@ const SCENARIOS = {
       { duration: '1m', target: 0 },
     ],
   },
+  breaking_point: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '1m', target: 200 },
+      { duration: '2m', target: 500 },
+      { duration: '2m', target: 1000 },
+      { duration: '2m', target: 2000 },
+      { duration: '2m', target: 2000 },
+      { duration: '1m', target: 0 },
+    ],
+  },
 };
 
 const scenarioName = __ENV.K6_SCENARIO || 'baseline';
