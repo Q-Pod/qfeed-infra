@@ -13,6 +13,7 @@ Q-Feed 부하 테스트용 JWT Access Token 생성 스크립트
 """
 
 import json
+import os
 import time
 import uuid
 import sys
@@ -31,7 +32,8 @@ NUM_USERS = 100           # 생성할 토큰 수
 USER_ID_START = 1000      # fake userId 시작값
 TOKEN_TTL_SECONDS = 3600  # 1시간
 ISSUER = "QFeed"
-OUTPUT_FILE = "../tokens.json"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_FILE = os.path.join(SCRIPT_DIR, "..", "tokens.json")  # cwd 무관, 항상 user-flow-k6/tokens.json
 
 def get_jwt_secret():
     """SSM Parameter Store에서 JWT_SECRET 가져오기"""
