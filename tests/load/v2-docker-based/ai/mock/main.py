@@ -49,7 +49,22 @@ async def mock_vllm(request: Request):
             "delivery": 4
         })
 
-    # question_router / follow_up_generator → 기타
+    # follow_up_generator → FollowUpOutput (cushion_text, question_text, subcategory)
+    elif {"cushion_text", "question_text", "subcategory"}.issubset(props):
+        content = json.dumps({
+            "cushion_text": "좋습니다, 다음 질문입니다.",
+            "question_text": "스레드와 프로세스의 컨텍스트 스위칭 차이를 설명해주세요.",
+            "subcategory": "OS"
+        })
+
+    # portfolio_follow_up_generator → PortfolioFollowUpOutput (cushion_text, question_text)
+    elif {"cushion_text", "question_text"}.issubset(props) and "decision" not in props:
+        content = json.dumps({
+            "cushion_text": "좋습니다, 다음 질문입니다.",
+            "question_text": "해당 프로젝트에서 가장 어려웠던 기술적 의사결정을 설명해주세요."
+        })
+
+    # question_router → QuestionOutput (decision, reasoning, ...)
     else:
         content = json.dumps({
             "decision": "new_topic",
