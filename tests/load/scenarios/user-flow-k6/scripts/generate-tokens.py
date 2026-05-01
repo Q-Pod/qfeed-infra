@@ -31,7 +31,7 @@ NUM_USERS = 100           # 생성할 토큰 수
 USER_ID_START = 1000      # fake userId 시작값
 TOKEN_TTL_SECONDS = 3600  # 1시간
 ISSUER = "QFeed"
-OUTPUT_FILE = "k6/tokens.json"
+OUTPUT_FILE = "../tokens.json"
 
 def get_jwt_secret():
     """SSM Parameter Store에서 JWT_SECRET 가져오기"""
