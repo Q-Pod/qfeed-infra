@@ -16,3 +16,8 @@ k8s/secrets/
 # Load Testing
 results/
 __pycache__/
+tokens.json
+.venv/
+
+# macOS
+.DS_Store
