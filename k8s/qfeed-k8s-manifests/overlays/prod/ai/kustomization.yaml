@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: qfeed-ai-k8s-namespace
+
+resources:
+  - ../../../base/ai
+
+images:
+  - name: 092399857215.dkr.ecr.ap-northeast-2.amazonaws.com/qfeed-ecr-ai
+    newTag: "0002da8"

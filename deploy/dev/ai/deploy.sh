@@ -27,6 +27,7 @@ echo "SSM 파라미터 조회 중..."
 
 GPU_STT_URL=$(get_ssm "gpu-stt-url")
 GPU_LLM_URL=$(get_ssm "gpu-llm-url")
+ELEVENLABS_BASE_URL=$(get_ssm "elevenlabs-base-url")
 
 echo "SSM 파라미터 조회 완료 (2개)"
 
@@ -44,6 +45,7 @@ AWS_PARAMETER_STORE_PATH=${SSM_PREFIX}
 # AI Service
 GPU_STT_URL=${GPU_STT_URL}
 GPU_LLM_URL=${GPU_LLM_URL}
+ELEVENLABS_BASE_URL=${ELEVENLABS_BASE_URL}
 EOF
 
 chmod 600 "$ENV_FILE"

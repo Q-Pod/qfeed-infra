@@ -153,7 +153,15 @@
 | `Project`     | `qfeed`                  | 프로젝트/서비스명              |
 | `ManagedBy`   | `terraform`              | 관리 주체 (terraform/manual)   |
 
-### 4.2 태그 예시
+### 4.2 EC2 추가 태그
+
+Prometheus `ec2_sd_configs`가 scrape 대상 EC2를 자동 감지할 때 사용하는 태그. 모니터링 대상 EC2에 필수.
+
+| 태그 키 | 값 예시                                | 설명                                                        |
+| ------- | -------------------------------------- | ----------------------------------------------------------- |
+| `Role`  | `backend`, `ai`, `redis`, `monitoring` | EC2의 역할. Prometheus가 이 태그로 scrape 대상을 필터링한다 |
+
+### 4.3 태그 예시
 
 ```
 Name: qfeed-prod-ec2-backend
@@ -196,6 +204,7 @@ ManagedBy: terraform
 
 - [ ] 네이밍 규칙 준수 여부
 - [ ] 필수 태그 4개 적용 여부 (Name, Environment, Project, ManagedBy)
+- [ ] EC2인 경우: `Role` 태그 적용 여부 (모니터링 대상 EC2)
 - [ ] 서비스별 길이/문자 제약 확인
 - [ ] 기존 리소스와 이름 충돌 여부
 - [ ] 환경(dev/prod) 정확히 구분

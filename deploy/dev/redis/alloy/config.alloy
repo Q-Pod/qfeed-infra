@@ -1,8 +1,8 @@
 // ==========================================================================
 // Redis EC2 Alloy Configuration (Dev)
 // 1. Host metrics → Prometheus remote_write (push)
-// 2. Redis Exporter metrics → Prometheus remote_write (push)
-// 3. Docker container logs → Loki push
+// 2. Docker container logs → Loki push
+// (Redis Exporter는 Prometheus가 직접 scrape — 중복 방지)
 // ==========================================================================
 
 // --- Host Metrics ---
@@ -25,23 +25,6 @@ prometheus.relabel "node_labels" {
 	rule {
 		target_label = "job"
 		replacement  = "node"
-	}
-	forward_to = [prometheus.remote_write.default.receiver]
-}
-
-// --- Redis Exporter Metrics ---
-
-prometheus.scrape "redis_exporter" {
-	targets = [{
-		__address__ = "localhost:9121",
-	}]
-	forward_to = [prometheus.relabel.redis_labels.receiver]
-}
-
-prometheus.relabel "redis_labels" {
-	rule {
-		target_label = "instance"
-		replacement  = env("EC2_NAME")
 	}
 	forward_to = [prometheus.remote_write.default.receiver]
 }

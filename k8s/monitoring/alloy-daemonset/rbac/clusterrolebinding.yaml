@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: alloy-extra-daemonset
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy-extra-daemonset
+subjects:
+  - kind: ServiceAccount
+    name: alloy-daemonset
+    namespace: qfeed-monitoring-k8s-namespace

@@ -7,6 +7,9 @@ locals {
 #!/bin/bash
 set -euxo pipefail
 
+# Timezone
+timedatectl set-timezone Asia/Seoul
+
 # Docker
 apt-get update -y
 apt-get install -y ca-certificates curl unzip
@@ -40,7 +43,7 @@ USERDATA
 }
 
 # =============================================================================
-# Backend EC2 (ASG 2~4)
+# Backend EC2 (ASG 1~4, 초기 배포 검증용 — 트래픽 전환 시 min/desired 2로 변경)
 # =============================================================================
 
 resource "aws_launch_template" "backend" {
@@ -76,9 +79,9 @@ resource "aws_launch_template" "backend" {
 
 resource "aws_autoscaling_group" "backend" {
   name                = "qfeed-prod-asg-backend"
-  min_size            = 2
+  min_size            = 1   # TODO: 실 트래픽 전환 시 2로 변경
   max_size            = 4
-  desired_capacity    = 2
+  desired_capacity    = 1   # TODO: 실 트래픽 전환 시 2로 변경
   vpc_zone_identifier = [aws_subnet.private_app_a.id]
   target_group_arns   = [aws_lb_target_group.backend.arn]
 

@@ -1,0 +1,209 @@
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+prometheus.exporter.unix "host" {
+  procfs_path = "/host/proc"
+  sysfs_path  = "/host/sys"
+}
+
+prometheus.scrape "node" {
+  targets         = prometheus.exporter.unix.host.targets
+  scrape_interval = "30s"
+  forward_to      = [prometheus.relabel.node_labels.receiver]
+}
+
+prometheus.relabel "node_labels" {
+  rule {
+    target_label = "instance"
+    replacement  = env("NODE_NAME")
+  }
+  rule {
+    target_label = "job"
+    replacement  = "node"
+  }
+  rule {
+    target_label = "cluster"
+    replacement  = "k8s-cluster"
+  }
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+prometheus.remote_write "default" {
+  external_labels = {
+    environment = "k8s",
+    role        = "worker",
+    cluster     = "k8s-cluster",
+  }
+
+  endpoint {
+    url = "http://10.1.3.90:9090/api/v1/write"
+
+    queue_config {
+      capacity             = 10000
+      max_samples_per_send = 2000
+      max_shards           = 20
+      min_shards           = 1
+      batch_send_deadline  = "5s"
+      retry_on_http_429    = true
+    }
+  }
+}
+
+discovery.kubernetes "nodes" {
+  role = "node"
+}
+
+discovery.relabel "local_node" {
+  targets = discovery.kubernetes.nodes.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    action        = "keep"
+    regex         = env("NODE_NAME")
+  }
+}
+
+discovery.relabel "kubelet" {
+  targets = discovery.relabel.local_node.output
+
+  rule {
+    target_label = "__address__"
+    replacement  = "kubernetes.default.svc.cluster.local:443"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    regex         = "(.+)"
+    replacement   = "/api/v1/nodes/$1/proxy/metrics"
+    target_label  = "__metrics_path__"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    target_label  = "instance"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    target_label  = "node"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "kubelet"
+  }
+}
+
+prometheus.scrape "kubelet" {
+  targets         = discovery.relabel.kubelet.output
+  scheme          = "https"
+  scrape_interval = "30s"
+  scrape_timeout  = "10s"
+  forward_to      = [prometheus.remote_write.default.receiver]
+
+  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+  tls_config {
+    ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+    server_name          = "kubernetes"
+    insecure_skip_verify = false
+  }
+}
+
+discovery.relabel "cadvisor" {
+  targets = discovery.relabel.local_node.output
+
+  rule {
+    target_label = "__address__"
+    replacement  = "kubernetes.default.svc.cluster.local:443"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    regex         = "(.+)"
+    replacement   = "/api/v1/nodes/$1/proxy/metrics/cadvisor"
+    target_label  = "__metrics_path__"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    target_label  = "instance"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    target_label  = "node"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "cadvisor"
+  }
+}
+
+prometheus.scrape "cadvisor" {
+  targets         = discovery.relabel.cadvisor.output
+  scheme          = "https"
+  scrape_interval = "15s"
+  scrape_timeout  = "10s"
+  forward_to      = [prometheus.remote_write.default.receiver]
+
+  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+  tls_config {
+    ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+    server_name          = "kubernetes"
+    insecure_skip_verify = false
+  }
+}
+
+discovery.kubernetes "pods_logs" {
+  role = "pod"
+
+  selectors {
+    role  = "pod"
+    field = "spec.nodeName=" + env("NODE_NAME")
+  }
+}
+
+discovery.relabel "pods_logs" {
+  targets = discovery.kubernetes.pods_logs.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label  = "container"
+  }
+  rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+    target_label  = "app"
+  }
+  rule {
+    target_label = "job"
+    replacement  = "kubernetes-pod-logs"
+  }
+  rule {
+    target_label = "environment"
+    replacement  = "k8s"
+  }
+}
+
+loki.source.kubernetes "pods" {
+  targets    = discovery.relabel.pods_logs.output
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://10.1.3.90:3100/loki/api/v1/push"
+  }
+}

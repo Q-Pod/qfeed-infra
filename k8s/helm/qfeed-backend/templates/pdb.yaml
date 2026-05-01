@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: qfeed-backend-k8s-pdb
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: qfeed-backend-k8s
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: qfeed-backend-k8s

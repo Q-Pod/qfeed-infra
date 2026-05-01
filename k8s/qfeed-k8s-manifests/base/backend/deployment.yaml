@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qfeed-backend-k8s
+  labels:
+    app: qfeed-backend-k8s
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: qfeed-backend-k8s
+  template:
+    metadata:
+      labels:
+        app: qfeed-backend-k8s
+    spec:
+      imagePullSecrets:
+        - name: qfeed-backend-ecr-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: qfeed-backend-k8s
+                topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: qfeed-backend-k8s
+      containers:
+        - name: backend
+          image: 092399857215.dkr.ecr.ap-northeast-2.amazonaws.com/qfeed-ecr-backend:latest
+          envFrom:
+            - secretRef:
+                name: qfeed-backend-k8s-secret
+          # OTEL: Secret/JVM agent와 무관하게 export 비활성화 (localhost:4318 등 미연결 collector 스팸 방지)
+          env:
+            - name: OTEL_SDK_DISABLED
+              value: "true"
+            - name: OTEL_TRACES_EXPORTER
+              value: "none"
+            - name: OTEL_METRICS_EXPORTER
+              value: "none"
+            - name: OTEL_LOGS_EXPORTER
+              value: "none"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits: {}
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            failureThreshold: 20
+            periodSeconds: 3
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+      terminationGracePeriodSeconds: 40

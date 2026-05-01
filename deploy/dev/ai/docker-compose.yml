@@ -3,6 +3,8 @@ services:
     image: ${ECR_REGISTRY}/qfeed-ecr-ai:${IMAGE_TAG}
     network_mode: host
     env_file: .env
+    mem_limit: 3500m
+    memswap_limit: 3500m
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ai')"]
@@ -16,9 +18,32 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  cadvisor:
+    image: ghcr.io/google/cadvisor:latest
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - "--port=8082"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   alloy:
     image: grafana/alloy:v1.13.2
     network_mode: host
+    mem_limit: 100m
+    memswap_limit: 100m
     restart: unless-stopped
     environment:
       - EC2_NAME=${EC2_NAME}

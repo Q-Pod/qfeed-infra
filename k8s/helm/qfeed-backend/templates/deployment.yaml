@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qfeed-backend-k8s
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: qfeed-backend-k8s
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: qfeed-backend-k8s
+  template:
+    metadata:
+      labels:
+        app: qfeed-backend-k8s
+      annotations:
+        {{- with .Values.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: qfeed-backend-k8s
+                topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: qfeed-backend-k8s
+      containers:
+        - name: backend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secretRef }}
+          env:
+            - name: OTEL_SDK_DISABLED
+              value: {{ .Values.otel.disabled | quote }}
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.otel.tracesExporter | quote }}
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.otel.metricsExporter | quote }}
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.otel.logsExporter | quote }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            {{- if .Values.resources.limits }}
+            limits:
+              {{- toYaml .Values.resources.limits | nindent 14 }}
+            {{- else }}
+            limits: {}
+            {{- end }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}

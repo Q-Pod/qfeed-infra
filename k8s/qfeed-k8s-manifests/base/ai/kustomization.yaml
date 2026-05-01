@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: qfeed-ai-k8s-namespace
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - pdb.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app: qfeed-ai-k8s

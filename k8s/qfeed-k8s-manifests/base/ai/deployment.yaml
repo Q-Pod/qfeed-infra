@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qfeed-ai-k8s
+  labels:
+    app: qfeed-ai-k8s
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: qfeed-ai-k8s
+  template:
+    metadata:
+      labels:
+        app: qfeed-ai-k8s
+    spec:
+      imagePullSecrets:
+        - name: qfeed-ai-ecr-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: qfeed-ai-k8s
+                topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: qfeed-ai-k8s
+      containers:
+        - name: ai
+          image: 092399857215.dkr.ecr.ap-northeast-2.amazonaws.com/qfeed-ecr-ai:latest
+          envFrom:
+            - secretRef:
+                name: qfeed-ai-k8s-secret
+          env:
+            - name: OTEL_SDK_DISABLED
+              value: "true"
+            - name: OTEL_TRACES_EXPORTER
+              value: "none"
+            - name: OTEL_METRICS_EXPORTER
+              value: "none"
+            - name: OTEL_LOGS_EXPORTER
+              value: "none"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1152Mi
+            limits: {}
+          startupProbe:
+            httpGet:
+              path: /ai
+              port: 8000
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ai
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /ai
+              port: 8000
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+      terminationGracePeriodSeconds: 40

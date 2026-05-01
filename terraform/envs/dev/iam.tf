@@ -295,6 +295,99 @@ resource "aws_iam_instance_profile" "ec2_ai" {
 }
 
 # =============================================================================
+# Monitoring EC2 IAM Role
+# =============================================================================
+
+resource "aws_iam_role" "ec2_monitoring" {
+  name = "qfeed-dev-role-ec2-monitoring"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = merge(local.common_tags, {
+    Name = "qfeed-dev-role-ec2-monitoring"
+  })
+}
+
+# -----------------------------------------------------------------------------
+# Monitoring - EC2 DescribeInstances (Prometheus ec2_sd_configs — Dev+Prod)
+# -----------------------------------------------------------------------------
+
+resource "aws_iam_role_policy" "monitoring_ec2_describe" {
+  name = "qfeed-dev-policy-monitoring-ec2-describe"
+  role = aws_iam_role.ec2_monitoring.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "ec2:DescribeInstances"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# -----------------------------------------------------------------------------
+# Monitoring - CloudWatch 읽기 권한 (Grafana CloudWatch 데이터소스)
+# -----------------------------------------------------------------------------
+
+resource "aws_iam_role_policy" "monitoring_cloudwatch" {
+  name = "qfeed-dev-policy-monitoring-cloudwatch"
+  role = aws_iam_role.ec2_monitoring.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:ListMetrics",
+          "cloudwatch:GetMetricData",
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:DescribeAlarmsForMetric"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# -----------------------------------------------------------------------------
+# Monitoring - SSM Session Manager 접속 권한
+# -----------------------------------------------------------------------------
+
+resource "aws_iam_role_policy_attachment" "monitoring_ssm_managed" {
+  role       = aws_iam_role.ec2_monitoring.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# -----------------------------------------------------------------------------
+# Monitoring - Instance Profile
+# -----------------------------------------------------------------------------
+
+resource "aws_iam_instance_profile" "ec2_monitoring" {
+  name = "qfeed-dev-profile-ec2-monitoring"
+  role = aws_iam_role.ec2_monitoring.name
+
+  tags = merge(local.common_tags, {
+    Name = "qfeed-dev-profile-ec2-monitoring"
+  })
+}
+
+# =============================================================================
 # GitHub Actions IAM Role
 # =============================================================================
 

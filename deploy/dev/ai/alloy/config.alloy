@@ -78,3 +78,23 @@ loki.write "default" {
 		url = "http://10.1.3.90:3100/loki/api/v1/push"
 	}
 }
+
+prometheus.scrape "cadvisor" {
+    targets = [{
+        __address__ = "localhost:8082",
+    }]
+    scrape_interval = "10s"
+    forward_to      = [prometheus.relabel.cadvisor_labels.receiver]
+}
+
+prometheus.relabel "cadvisor_labels" {
+    rule {
+        target_label = "instance"
+        replacement  = env("EC2_NAME")
+    }
+    rule {
+        target_label = "job"
+        replacement  = "cadvisor"
+    }
+    forward_to = [prometheus.remote_write.default.receiver]
+}

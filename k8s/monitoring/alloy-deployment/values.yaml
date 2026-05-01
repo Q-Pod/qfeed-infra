@@ -1,0 +1,20 @@
+alloy:
+  configMap:
+    create: false
+    name: config-alloy-deployment
+    key: config.alloy
+
+  mounts:
+    varlog: false
+    dockercontainers: false
+
+controller:
+  type: deployment
+  replicas: 1
+
+serviceAccount:
+  create: true
+  name: alloy-deployment
+
+rbac:
+  create: true

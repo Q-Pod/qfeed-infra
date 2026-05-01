@@ -3,6 +3,8 @@ services:
     image: ${ECR_REGISTRY}/qfeed-ecr-ai:${IMAGE_TAG}
     network_mode: host
     env_file: .env
+    mem_limit: 3500m
+    memswap_limit: 3500m
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ai')"]
@@ -19,6 +21,8 @@ services:
   alloy:
     image: grafana/alloy:v1.13.2
     network_mode: host
+    mem_limit: 100m
+    memswap_limit: 100m
     restart: unless-stopped
     environment:
       - EC2_NAME=${EC2_NAME}

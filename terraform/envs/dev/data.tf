@@ -24,6 +24,11 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
   name = "com.amazonaws.global.cloudfront.origin-facing"
 }
 
+# Prod VPC (VPC 피어링 + 모니터링 SG에서 Prod CIDR 참조)
+data "aws_vpc" "prod" {
+  id = "vpc-0cd05ba717f09a29e"
+}
+
 # OIDC Provider (CLI로 생성 완료, data source로 참조)
 data "aws_iam_openid_connect_provider" "github_actions" {
   url = "https://token.actions.githubusercontent.com"

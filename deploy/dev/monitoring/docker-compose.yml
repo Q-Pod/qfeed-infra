@@ -82,6 +82,30 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  tempo:
+    image: grafana/tempo:2.10.2
+    container_name: tempo
+    command:
+      - "-config.file=/etc/tempo/tempo-config.yaml"
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml:ro
+      - tempo-data:/var/tempo
+    networks:
+      - monitoring
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   alloy:
     image: grafana/alloy:v1.13.2
     container_name: alloy
@@ -118,3 +142,4 @@ volumes:
   prometheus-data:
   loki-data:
   grafana-data:
+  tempo-data:

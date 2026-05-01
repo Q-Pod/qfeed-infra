@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: qfeed-backend-k8s
+  namespace: qfeed-argocd-k8s-namespace
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Q-Pod/qfeed-infra.git
+    targetRevision: main
+    path: k8s/helm/qfeed-backend
+    helm:
+      valueFiles:
+        - values.yaml # 기본값 먼저 로드
+        - values-prod.yaml # prod 오버라이드
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: qfeed-backend-k8s-namespace
+  syncPolicy:
+    automated:
+      prune: true # Git에서 삭제된 리소스 자동 제거
+      selfHeal: true # 클러스터 상태가 Git과 달라지면 자동 복구
+    syncOptions:
+      - CreateNamespace=true
