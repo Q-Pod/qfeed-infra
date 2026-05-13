@@ -16,7 +16,7 @@ prometheus.remote_write "default" {
   }
 
   endpoint {
-    url = "http://10.1.3.90:9090/api/v1/write"
+    url = "http://10.1.4.183:9090/api/v1/write"
 
     queue_config {
       capacity             = 10000
