@@ -1,0 +1,77 @@
+replicaCount: 3
+
+image:
+  repository: 092399857215.dkr.ecr.ap-northeast-2.amazonaws.com/qfeed-ecr-ai
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: qfeed-ai-ecr-pull-secret
+
+nameOverride: ""
+fullnameOverride: "qfeed-ai-k8s"
+
+namespace: qfeed-ai-k8s-namespace
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 1152Mi
+  limits: {}
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+env:
+  OTEL_SDK_DISABLED: "true"
+  OTEL_TRACES_EXPORTER: "none"
+  OTEL_METRICS_EXPORTER: "none"
+  OTEL_LOGS_EXPORTER: "none"
+
+secretRef:
+  name: qfeed-ai-k8s-secret
+
+probes:
+  startup:
+    path: /ai
+    port: 8000
+    failureThreshold: 30
+    periodSeconds: 10
+  readiness:
+    path: /ai
+    port: 8000
+  liveness:
+    path: /ai
+    port: 8000
+
+terminationGracePeriodSeconds: 40
+
+securityContext:
+  pod:
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  container:
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+
+affinity:
+  podAntiAffinity:
+    enabled: true
+
+topologySpreadConstraints:
+  enabled: true
+  maxSkew: 1
