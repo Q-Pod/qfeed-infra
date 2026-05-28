@@ -219,6 +219,7 @@ discovery.kubernetes "spring_pods" {
   selectors {
     role  = "pod"
     label = "app=qfeed-backend-k8s"
+    field = "spec.nodeName=" + env("NODE_NAME")
   }
 }
 
