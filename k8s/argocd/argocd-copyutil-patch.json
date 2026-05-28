@@ -1,0 +1,5 @@
+[{
+  "op": "replace",
+  "path": "/spec/template/spec/initContainers/0/args/0",
+  "value": "/bin/cp --update=none /usr/local/bin/argocd /var/run/argocd/argocd && /bin/ln -sf /var/run/argocd/argocd /var/run/argocd/argocd-cmp-server"
+}]
