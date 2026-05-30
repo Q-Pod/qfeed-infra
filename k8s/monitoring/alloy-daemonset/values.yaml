@@ -4,6 +4,16 @@ alloy:
     name: config-alloy-daemonset
     key: config.alloy
 
+  extraPorts:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+
   mounts:
     varlog: false
     dockercontainers: false
@@ -23,6 +33,8 @@ alloy:
 
 controller:
   type: daemonset
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
   volumes:
     extra:
       - name: host-proc

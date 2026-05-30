@@ -282,3 +282,34 @@ prometheus.scrape "spring_actuator" {
   scrape_timeout  = "10s"
   forward_to      = [prometheus.remote_write.default.receiver]
 }
+
+// ─── OTel 트레이스 파이프라인 ──────────────────────────────────────────────
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    traces = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.processor.batch "default" {
+  timeout         = "5s"
+  send_batch_size = 1024
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "http://10.1.4.183:4317"
+    tls {
+      insecure = true
+    }
+  }
+}

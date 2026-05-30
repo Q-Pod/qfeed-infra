@@ -41,10 +41,14 @@ terminationGracePeriodSeconds: 40
 secretRef: qfeed-backend-k8s-secret
 
 otel:
-  disabled: "true"
-  tracesExporter: "none"
+  disabled: "false"
+  tracesExporter: "otlp"
   metricsExporter: "none"
   logsExporter: "none"
+  serviceName: "qfeed-backend"
+  resourceAttributes: "deployment.environment=prod,cluster=k8s-cluster"
+  sampler: "parentbased_traceidratio"
+  samplerArg: "0.1"
 
 pdb:
   minAvailable: 1
