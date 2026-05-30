@@ -49,6 +49,7 @@ otel:
   resourceAttributes: "deployment.environment=prod,cluster=k8s-cluster"
   sampler: "parentbased_traceidratio"
   samplerArg: "0.1"
+  protocol: "grpc"
 
 pdb:
   minAvailable: 1
