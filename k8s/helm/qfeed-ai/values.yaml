@@ -34,8 +34,7 @@ pdb:
   enabled: true
   minAvailable: 1
 
-env:
-  ENVIRONMENT: "prod"
+env: {}
 
 otel:
   disabled: false

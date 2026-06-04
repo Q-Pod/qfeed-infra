@@ -1,2 +1,5 @@
+env:
+  ENVIRONMENT: "prod"
+  AWS_PARAMETER_STORE_PATH: "/qfeed/prod/ai"
 image:
   tag: "fd17604"
