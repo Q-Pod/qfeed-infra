@@ -35,10 +35,18 @@ pdb:
   minAvailable: 1
 
 env:
-  OTEL_SDK_DISABLED: "true"
-  OTEL_TRACES_EXPORTER: "none"
-  OTEL_METRICS_EXPORTER: "none"
-  OTEL_LOGS_EXPORTER: "none"
+  ENVIRONMENT: "prod"
+
+otel:
+  disabled: false
+  tracesExporter: "otlp"
+  metricsExporter: "none"
+  logsExporter: "none"
+  serviceName: "qfeed-ai"
+  resourceAttributes: "deployment.environment=prod,cluster=k8s-cluster"
+  sampler: "parentbased_traceidratio"
+  samplerArg: "1.0"
+  protocol: "grpc"
 
 secretRef:
   name: qfeed-ai-k8s-secret
