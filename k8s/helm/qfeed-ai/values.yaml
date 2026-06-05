@@ -82,3 +82,7 @@ affinity:
 topologySpreadConstraints:
   enabled: true
   maxSkew: 1
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
