@@ -283,6 +283,69 @@ prometheus.scrape "spring_actuator" {
   forward_to      = [prometheus.remote_write.default.receiver]
 }
 
+// ─── FastAPI (qfeed-ai) Prometheus 스크래핑 ───────────────────────────────
+
+discovery.kubernetes "ai_pods" {
+  role = "pod"
+  namespaces {
+    own_namespace = false
+    names         = ["qfeed-ai-k8s-namespace"]
+  }
+  selectors {
+    role  = "pod"
+    label = "app=qfeed-ai-k8s"
+    field = "spec.nodeName=" + env("NODE_NAME")
+  }
+}
+
+discovery.relabel "ai_metrics" {
+  targets = discovery.kubernetes.ai_pods.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_scrape"]
+    action        = "keep"
+    regex         = "true"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_phase"]
+    action        = "keep"
+    regex         = "Running"
+  }
+
+  rule {
+    source_labels = [
+      "__meta_kubernetes_pod_ip",
+      "__meta_kubernetes_pod_annotation_prometheus_io_port",
+    ]
+    separator    = ":"
+    regex        = "(.+):(.+)"
+    action       = "replace"
+    target_label = "__address__"
+    replacement  = "$1:$2"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "qfeed-ai"
+  }
+  rule {
+    target_label = "namespace"
+    replacement  = "qfeed-ai-k8s-namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+}
+
+prometheus.scrape "ai_metrics" {
+  targets         = discovery.relabel.ai_metrics.output
+  scrape_interval = "15s"
+  scrape_timeout  = "10s"
+  forward_to      = [prometheus.remote_write.default.receiver]
+}
+
 // ─── OTel 트레이스 파이프라인 ──────────────────────────────────────────────
 
 otelcol.receiver.otlp "default" {
