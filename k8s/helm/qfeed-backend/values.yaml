@@ -40,6 +40,8 @@ terminationGracePeriodSeconds: 40
 
 secretRef: qfeed-backend-k8s-secret
 
+env: {}
+
 otel:
   disabled: "false"
   tracesExporter: "otlp"

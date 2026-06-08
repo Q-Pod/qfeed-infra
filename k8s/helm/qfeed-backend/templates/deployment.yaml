@@ -55,6 +55,10 @@ spec:
             - secretRef:
                 name: {{ .Values.secretRef }}
           env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
             - name: OTEL_SDK_DISABLED
               value: {{ .Values.otel.disabled | quote }}
             - name: OTEL_TRACES_EXPORTER
