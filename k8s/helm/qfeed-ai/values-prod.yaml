@@ -2,4 +2,4 @@ env:
   ENVIRONMENT: "prod"
   AWS_PARAMETER_STORE_PATH: "/qfeed/prod/ai"
 image:
-  tag: "f595ab4"
+  tag: "b4a52eb"
