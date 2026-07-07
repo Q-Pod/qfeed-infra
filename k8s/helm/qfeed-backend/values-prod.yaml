@@ -1,4 +1,4 @@
 env:
   SPRING_PROFILES_ACTIVE: "redis"
 image:
-  tag: "352ab2e"
+  tag: "c0c75ca"
